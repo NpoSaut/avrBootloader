@@ -1,0 +1,1 @@
+unsigned short GetCRC16(unsigned char *puchMsg, unsigned long DataLen);
