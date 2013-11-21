@@ -100,10 +100,9 @@ void Write_CAN_buff(unsigned char *Buff, unsigned char BuffLen, unsigned long CA
       // __delay_cycles(10000);
        CANCDMOB = BuffLen|(1<<CONMOB0);//|(1<<DLC1);		// Разрешение передачи, CAN-A (IDE=0), 2 байт DLC
        while (!(CANSTMOB & (1<<TXOK))){
-       //  PORTE = CANSTMOB; 
          asm("nop");
        }
-        CANGIE = (1<<ENIT)|(1<<ENRX)|(1<<ENRX); // Разрешаем прерывание CAN по приему кадра
+        CANGIE = (1<<ENIT)|(1<<ENRX); // Разрешаем прерывание CAN по приему кадра
       // __delay_cycles(10000);      
              __enable_interrupt();
 }
@@ -114,7 +113,7 @@ __interrupt void CAN_interrupt(void)
 {
       // FIFO_init(CANMsgBuff);
      __disable_interrupt();
-      PORTE = 0xFF;               
+     // PORTE = 0x10;               
       unsigned int Temp =0;
       for (unsigned char j=0; j<4; j++)
     {

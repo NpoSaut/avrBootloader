@@ -9,6 +9,7 @@
 #include "CAN.h"
 #include "isotp.h"
 
+
 unsigned int times_ms[TIMES_COUNT]; // Массив счетчиков времени
 
 char a;
@@ -46,6 +47,8 @@ SysIDStruc IDFromCAN;
   unsigned char fileCnt;
 
 unsigned char state;
+
+void PutIDToCANBuff(SysIDStruc *ID,  unsigned char *Buff);
 
 #pragma inline = forced
 void Timer_init()
@@ -300,11 +303,12 @@ int FileTableCheckCRC(filerecord *fileTable, unsigned char fileCnt, SysIDStruc* 
     if (CalculateCRCForFlashRegion(fileTable[i].addr, fileTable[i].fsize)!=fileTable[i].fCRC)
     {
       msgBuff[0] = 0xFF;
+      PutIDToCANBuff(SysID, msgBuff);
       /*msgBuff[1] = SysID->systemID;
       msgBuff[2] = SysID->blockID;
       msgBuff[3] = SysID->blockMdf;
       msgBuff[4] = i;*/
-      ISOTPSendSingleFrame(msgBuff, 5);
+      ISOTPSendSingleFrame(msgBuff, 7);
       result = -1;
     }
   }
@@ -483,7 +487,7 @@ void FileTableConvertToFUDPBuff(filerecord *fileTable, unsigned char fileCnt, un
      }
      
      *((unsigned long*)(FUDPBuff+buffIdx)) = fileTable[i].fsize;
-     *((unsigned long*)(FUDPBuff+buffIdx+4)) = fileTable[i].fCRC;
+     *((unsigned long*)(FUDPBuff+buffIdx+4)) = CalculateCRCForFlashRegion(fileTable[i].addr, fileTable[i].fsize);//fileTable[i].fCRC;
      buffIdx+=8;
   }
   *FUDPBuffLen = buffIdx;
@@ -536,6 +540,13 @@ __interrupt void TIMER2_interrup(void)
       times_ms[PROG_CONDITION_DELAY_IDX] = 0;
       if (FileTableCheckCRC(fileTable, fileCnt, &SysID) == 0)
           StartProgram();   
+      else
+      {
+          WDTCR |= (1<<WDCE)|(1<<WDE);
+          WDTCR = (1<<WDE)|(1<<WDP2)|(1<<WDP1);	// установить период тайм-аута ~1,0 с
+          for(;;)
+              asm("nop");
+      }
     }
     __enable_interrupt();
     return;
@@ -704,11 +715,11 @@ void ProcessBuffer(unsigned char lastBlock, unsigned char bytesReceived)
                     (msgBuff[6] == 0x5B)))*/
                      ExtractIDFromCANBuff(&IDFromCAN, msgBuff);
                      if (!
-                         ((IDFromCAN.blockID == SysID.blockID) &&
-                          (IDFromCAN.modif == SysID.modif) &&
-                          (IDFromCAN.channel == SysID.channel) &&
-                          (IDFromCAN.blockSN == SysID.blockSN) &&
-                          (IDFromCAN.softwareModuleNum == SysID.softwareModuleNum))
+                         (((IDFromCAN.blockID == SysID.blockID)||(IDFromCAN.blockID==0)) &&
+                          ((IDFromCAN.modif == SysID.modif)||(IDFromCAN.modif == 0)) &&
+                          ((IDFromCAN.channel == SysID.channel)||(IDFromCAN.channel == 0)) &&
+                          ((IDFromCAN.blockSN == SysID.blockSN)||(IDFromCAN.blockSN == 0)) &&
+                          ((IDFromCAN.softwareModuleNum == SysID.softwareModuleNum)||(IDFromCAN.softwareModuleNum == 0)))
                          )
                       {
                         WDTCR |= (1<<WDCE)|(1<<WDE);
@@ -778,15 +789,16 @@ __C_task void main(void)
   
   __disable_interrupt();
   //DDRE = 0xFC;
+  //PORTE = 0x08;
   //DDRC = (3<<4);
   times_ms[PROG_CONDITION_DELAY_IDX] = 0;
 
-  MCUCR =  (1<<IVCE);            
+  MCUCR = (1<<IVCE);            
   MCUCR = (1<<IVSEL);    // Векторы прерываний - в секции Boot Loader 
   CAN_init();
   //*((unsigned int *) &GPIOR1) = (unsigned int)ParamDicGetParam;
   //a = PIND;
-  
+ 
   //wdt_enable();
   	//WDTCR = (1<<WDCE)|(1<<WDE);
 	WDTCR = 0x00;
@@ -794,20 +806,8 @@ __C_task void main(void)
   
   FIFO_init(&CANMsgBuff);
   Timer_init(); 
- /* msgBuffOut[0] = 0x14;
-  msgBuffOut[1] = 0x15;
-  msgBuffOut[2] = 0x16;
-  msgBuffOut[3] = 0x17;
-  msgBuffOut[4] = 0x18;
-  msgBuffOut[5] = 0x19;
-  msgBuffOut[6] = 0x20;
-  msgBuffOut[7] = 0x21;
-  ISOTPSendSingleFrame(msgBuffOut, 7);*/
-  //Write_CAN_buff(msgBuffOut, 8, 0x7E2);
-  
-  __enable_interrupt();
- 
 
+  __enable_interrupt();
   fileCnt = 0;
   __delay_cycles(1000000);
 
@@ -815,7 +815,6 @@ __C_task void main(void)
   ParamDicReadFromFlash(keyparamTable, &keyCnt);
   
   long value; 
-
 
   ParamDicGetParam(BLOCK_ID_KEY , &value);
   SysID.blockID = (unsigned int)value;
@@ -832,9 +831,13 @@ __C_task void main(void)
  // unsigned int tmp;
 
   //unsigned char msgBuff[8];  
+  progstate = 0;
   
   while (!progstate) // В цикле ожидаем команды на открытие соединения
   {
+   /* if (CANSTMOB & (1<<BOFF))
+      PORTE = 0x08;
+    PORTE = 0x40;*/
     while (!FIFO_isEmpty(&CANMsgBuff) && !progstate)
      {
        FIFO_PullFromBuff(&CANMsgBuff, &CANMsg); //Достаем из FIFO сообщение 
@@ -860,25 +863,22 @@ __C_task void main(void)
             
                if (!fl)        
                {
+                // PORTE = 0x80;
                 __delay_cycles(500000); 
+                times_ms[PROG_CONDITION_DELAY_IDX] = 0;
                 FIFO_init(&CANMsgBuff); 
                 int len;
                 msgBuffOut[0] = PROG_STATUS;
                 ParamDicConvertToFUDPBuff (keyparamTable, keyCnt, msgBuffOut, &len); 
                 ISOTPSendMsg1(msgBuffOut, len, 0, 0, 0);
                 progstate = 1; // Если совпали идентификаторы системы, переходим в состояние 1
+                
                 break;
                } else
                  //if ((CANMsg.MsgBody[6] == 0) && (CANMsg.MsgBody[7] ==0))
                  {
                    msgBuffOut[0] = BROADCAST_ANSWER;
                    PutIDToCANBuff(&SysID, msgBuffOut);
-                /*   msgBuffOut[1] = SysID.systemID;
-                   msgBuffOut[2] = (unsigned char)SysID.blockID;
-                   msgBuffOut[3] = (unsigned char)(SysID.blockID>>8);
-                   msgBuffOut[4] = (SysID.blockMdf & 0x3F)|(SysID.channel<<6);
-                   msgBuffOut[5] = (unsigned char)SysID.blockSN;
-                   msgBuffOut[6] = (unsigned char)(SysID.blockSN>>8);*/
                    ISOTPSendSingleFrame(msgBuffOut, 7);
                   }
        }  
@@ -886,6 +886,7 @@ __C_task void main(void)
   }
   for(;;) // В цикле обрабатываем получаемые сообщения
   {   
+    // PORTE = 0xC0;
      if (ISOTPReceiveMessage(msgBuff, &msgBuffLen, ProcessBuffer)==1)
      {
        FIFO_init(&CANMsgBuff);

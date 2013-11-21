@@ -185,6 +185,7 @@ char ISOTPReceiveMessage(unsigned char* blockBuff, int *msgLen, void (*ProcessBu
              //  PORTE = 0xFA;
                if ((CANMsg.MsgBody[0] & 0xF0)== 0) // Приняли Single frame
                    {
+                     times_ms[PROG_CONDITION_DELAY_IDX] = 0;
                      *msgLen = CANMsg.MsgBody[0] & 0x0F; // Длина Single Frame
                      for (char i=0; i<(CANMsg.MsgBody[0] & 0x0F); i++)
                        blockBuff[i] = CANMsg.MsgBody[i+1];
@@ -194,6 +195,7 @@ char ISOTPReceiveMessage(unsigned char* blockBuff, int *msgLen, void (*ProcessBu
                
                if ((CANMsg.MsgBody[0] & 0xF0) == 0x10) //Дождались First Frame
                   {
+                    times_ms[PROG_CONDITION_DELAY_IDX] = 0;
                     *msgLen=(CANMsg.MsgBody[0] &0xF)<<8; 
                     *msgLen+=CANMsg.MsgBody[1];         //Извлекли длину всего сообщения
                     CANFrameCnt = 1;
@@ -219,6 +221,7 @@ char ISOTPReceiveMessage(unsigned char* blockBuff, int *msgLen, void (*ProcessBu
                
           case RECEIVE_MSG: //Прием сообщения
                 times_ms[ISOTP_TIMEOUT_IDX] = 0;
+                times_ms[PROG_CONDITION_DELAY_IDX] = 0;
                 if ((CANMsg.MsgBody[0]&0x0F) != ((msgIdx + 1)&0x0F))
                 {
                     MakeFlowControlPacket(a, 2, 0, 0); // Формируем Flow Control
@@ -270,7 +273,7 @@ char ISOTPReceiveMessage(unsigned char* blockBuff, int *msgLen, void (*ProcessBu
         }
    
       }
-    // 
+    
     if ((state==RECEIVE_MSG) && (times_ms[ISOTP_TIMEOUT_IDX]>ISOTP_TIMEOUT_PRESET))
     {
         MakeFlowControlPacket(a, 2, 0, 0); // Формируем Flow Control
@@ -278,7 +281,7 @@ char ISOTPReceiveMessage(unsigned char* blockBuff, int *msgLen, void (*ProcessBu
        /* wdt_enable();
         for(;;) asm("nop");*/
          return 1;
-
     }
+    
   }  
 }
