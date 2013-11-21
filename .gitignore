@@ -1,3 +1,7 @@
+Debug
+Release
+settings
+
 # Object files
 *.o
 *.ko
@@ -16,6 +20,3 @@
 *.exe
 *.out
 *.app
-
-Debug
-settings
