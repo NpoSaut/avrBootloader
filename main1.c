@@ -728,12 +728,35 @@ void ProcessBuffer(unsigned char lastBlock, unsigned char bytesReceived)
                          asm("nop");
                       }
                     break;
-                case PROG_CLOSE:
-                    if (FileTableCheckCRC(fileTable, fileCnt, &SysID) == 0)
+                case PROG_SUBMIT:
+                    msgBuffOut[0] = PROG_SUBMIT_ACK;
+                    switch (msgBuffOut[1])
                     {
-                      msgBuffOut[0] = PROG_CLOSE_ACK;
-                      ISOTPSendSingleFrame(msgBuffOut, 1);
-                      StartProgram(); 
+                    case SUBMIT: // Применить изменения
+                      {
+                        if (FileTableCheckCRC(fileTable, fileCnt, &SysID) == 0)
+                        {
+                          msgBuff[1] = SUBMIT_ACK_OK; // CRC совпала
+                          ISOTPSendSingleFrame(msgBuffOut, 2);
+                          StartProgram(); 
+                        }
+                        else
+                        {
+                          msgBuff[1] = SUBMIT_ACK_FAIL; // что-то пошло не так
+                          ISOTPSendSingleFrame(msgBuffOut, 2);
+                          WDTCR |= (1<<WDCE)|(1<<WDE);
+                          WDTCR = (1<<WDE)|(1<<WDP2)|(1<<WDP1);	// установить период тайм-аута ~1,0 с
+                          for(;;)
+                             asm("nop");
+                        }
+                        break;
+                      }
+                    case CANCEL: // Отменить изменения
+                      {
+                          msgBuff[1] = CANCEL_ACK_FAIL; // Возможность отмены изменений недоступна
+                          ISOTPSendSingleFrame(msgBuffOut, 2);
+                          break;
+                      }
                     }
                     break;
             }

@@ -85,9 +85,14 @@
 #define PARAM_SET_ACK           0x10
 #define PARAM_RM_RQ             0x11
 #define PARAM_RM_ACK            0x12
-#define PROG_CLOSE              0x13
-#define PROG_CLOSE_ACK          0x14
-
+#define PROG_SUBMIT             0x13
+#define PROG_SUBMIT_ACK         0x14
+#define         SUBMIT              0x00
+#define             SUBMIT_ACK_OK          0x00
+#define             SUBMIT_ACK_FAIL        0x01
+#define         CANCEL              0x01
+#define             CANCEL_ACK_OK          0x02
+#define             CANCEL_ACK_FAIL        0x03
 #define BROADCAST_ANSWER        0x00
 
 #endif
