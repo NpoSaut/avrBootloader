@@ -46,13 +46,13 @@ void CAN_init()
             CANPAGE = (i<<4);		// выбор MOb0 (Page Mob Register)
      CANIDM4 = (1<<RTRMSK);		// |(1<<IDEMSK);  // настройка Identifier Mask Registers               
             CANIDM3 = 0;
-            CANIDM2 = 0xC0;
+            CANIDM2 = 0x80;
             CANIDM1 = 0xFF;
 
     CANIDT4 = 0;
             CANIDT3 = 0;
-            CANIDT2 = 0;
-            CANIDT1 = 0xFC;                
+            CANIDT2 =          FU_PROG << 5;
+            CANIDT1 = /*0x7E0*/FU_PROG >> 3;               
             // Ставим маску (фильтрация сообщ.) на 10 разрядов IDTAG + RTR	
             // SetMaskIDTAG();		
     CANCDMOB = (1<<CONMOB1)|(1<<DLC3); 	// Настройка Mob на прием, 8 байт DLC
@@ -136,7 +136,7 @@ __interrupt void CAN_interrupt(void)
                     // Добавляем в сообщение в буфер FIFO 
                     Temp = (CANIDT1*8);
                     Temp += (CANIDT2>>5);
-                if ((Temp == 0x7E0) || (Temp == 0x7E1))
+                if ((Temp == FU_INIT /*0x7E0*/) || (Temp == FU_PROG/*0x7E1*/))
                 {
                     //CANPAGE = (j<<4)|(1<<AINC);  
                 
@@ -158,13 +158,13 @@ reinstal:
 					// Повторная настройка Mob на прием, 8 байт DLC
                 CANIDM4 = (1<<RTRMSK);		// |(1<<IDEMSK);  // настройка Identifier Mask Registers               
                 CANIDM3 = 0;
-                CANIDM2 = 0xC0;
+                CANIDM2 = 0x80;
                 CANIDM1 = 0xFF;
 
                 CANIDT4 = 0;
                 CANIDT3 = 0;
-                CANIDT2 = 0;
-                CANIDT1 = 0xFC;          
+                CANIDT2 =          FU_PROG << 5;
+                CANIDT1 = /*0x7E0*/FU_PROG >> 3;          
 		CANCDMOB = (1<<CONMOB1)|(1<<DLC3); 	
 		CANSTMOB &= ~(0x3E); 	// Снятие признака приема сообщения (1<<RXOK) & flag_errors
 	}	

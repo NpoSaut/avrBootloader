@@ -8,7 +8,7 @@
 
 
 #define SEPARATION_TIME 0
-#define OUT_MSG_DESC 0x7E2
+
 
 extern CANFIFO CANMsgBuff;
 extern unsigned int times_ms[TIMES_COUNT];
@@ -100,7 +100,7 @@ int ISOTPSendMsg1(unsigned char* hdrBuff, unsigned char hdrLen, unsigned long ms
     else
      outbuff[i+2] = hdrBuff[i]; 
  
-  Write_CAN_buff(outbuff, 8, OUT_MSG_DESC); // Отправляем First Frame в CAN
+  Write_CAN_buff(outbuff, 8, FU_DEV); // Отправляем First Frame в CAN
   sndBytesCnt = 6;
   
   while (sndBytesCnt<buffLen+hdrLen) 
@@ -127,7 +127,7 @@ int ISOTPSendMsg1(unsigned char* hdrBuff, unsigned char hdrLen, unsigned long ms
       }
     
     outbuff[0] = 0x20 + idx;
-    Write_CAN_buff(outbuff, 8, OUT_MSG_DESC); // Отправляем Consecutive Frame в CAN
+    Write_CAN_buff(outbuff, 8, FU_DEV); // Отправляем Consecutive Frame в CAN
     MsgsBeforeFC--;
     idx++;
     idx&=0x0F;
@@ -149,7 +149,7 @@ void ISOTPSendSingleFrame(unsigned char* msgBuff, char buffLen)
   {
     outbuff[i+1] = msgBuff[i];
   }
-  Write_CAN_buff(outbuff, 8, OUT_MSG_DESC); // Отправляем Single Frame
+  Write_CAN_buff(outbuff, 8, FU_DEV); // Отправляем Single Frame
 }
 
 char ISOTPReceiveMessage(unsigned char* blockBuff, int *msgLen, void (*ProcessBuffer)(unsigned char lastBlock, unsigned char bytesReceived))
@@ -211,7 +211,7 @@ char ISOTPReceiveMessage(unsigned char* blockBuff, int *msgLen, void (*ProcessBu
                     blocklen = 35; 
                     MakeFlowControlPacket(a, 0, blocklen, SEPARATION_TIME); // Формируем Flow Control
                     FIFO_init(&CANMsgBuff);
-                    Write_CAN_buff(a, 8, OUT_MSG_DESC);           // Отправляем Flow Control
+                    Write_CAN_buff(a, 8, FU_DEV);           // Отправляем Flow Control
                     state = RECEIVE_MSG; //Переходим в состояние приема сообщения
                     times_ms[ISOTP_TIMEOUT_IDX] = 0;
                     msgIdx = 0x0;
@@ -225,7 +225,7 @@ char ISOTPReceiveMessage(unsigned char* blockBuff, int *msgLen, void (*ProcessBu
                 if ((CANMsg.MsgBody[0]&0x0F) != ((msgIdx + 1)&0x0F))
                 {
                     MakeFlowControlPacket(a, 2, 0, 0); // Формируем Flow Control
-                    Write_CAN_buff(a, 8, OUT_MSG_DESC);           // Отправляем Flow Control
+                    Write_CAN_buff(a, 8, FU_DEV);           // Отправляем Flow Control
                     /*wdt_enable();
                     for(;;) asm("nop");*/
                     return 1;
@@ -255,7 +255,7 @@ char ISOTPReceiveMessage(unsigned char* blockBuff, int *msgLen, void (*ProcessBu
                    {
                     ProcessBuffer(0, msgBufPos);
                     MakeFlowControlPacket(a, 0, blocklen, SEPARATION_TIME);
-                    Write_CAN_buff(a, 8, OUT_MSG_DESC);
+                    Write_CAN_buff(a, 8, FU_DEV);
                    }
                     msgBufPos = 0;
                    /* for (int i=msgBufPos; i<256; i++)
@@ -277,7 +277,7 @@ char ISOTPReceiveMessage(unsigned char* blockBuff, int *msgLen, void (*ProcessBu
     if ((state==RECEIVE_MSG) && (times_ms[ISOTP_TIMEOUT_IDX]>ISOTP_TIMEOUT_PRESET))
     {
         MakeFlowControlPacket(a, 2, 0, 0); // Формируем Flow Control
-        Write_CAN_buff(a, 8, OUT_MSG_DESC);           // Отправляем Flow Control
+        Write_CAN_buff(a, 8, FU_DEV);           // Отправляем Flow Control
        /* wdt_enable();
         for(;;) asm("nop");*/
          return 1;

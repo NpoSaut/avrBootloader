@@ -53,10 +53,10 @@
 #define BOOTLOADER_FS_ENABLE 0    // Значение свойства "Наличие файловой системы"
 
 #define BOOTLOADER_PROTOCOL_VER_KEY  195 // Ключ свойства "Версия протокола обновления ПО"
-#define BOOTLOADER_PROTOCOL_VER 2    // Значение свойства "Версия протокола обновления ПО"
+#define BOOTLOADER_PROTOCOL_VER 4    // Значение свойства "Версия протокола обновления ПО"
 
 #define BOOTLOADER_OLD_PROTOCOL_VER_KEY  196 // Ключ свойства "Самая старая из поддерживаемых версий протокола обновления ПО"
-#define BOOTLOADER_OLD_PROTOCOL_VER 2    // Значение свойства "Самая старая из поддерживаемых версий протокола обновления ПО"
+#define BOOTLOADER_OLD_PROTOCOL_VER 4    // Значение свойства "Самая старая из поддерживаемых версий протокола обновления ПО"
 
 #define FILETABLE_FLASHADDR 0x1DE00 // Начальный адрес Flash таблицы размещения блоков информации
 #define PARAMLIST_FLASHADDR 0x1DF00 // Начальный адрес Flash словаря параметров
