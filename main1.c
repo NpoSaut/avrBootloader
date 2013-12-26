@@ -556,7 +556,7 @@ __interrupt void TIMER2_interrup(void)
 
 char ExtractIDFromCANBuff(SysIDStruc *ID,  unsigned char *Buff)
 {
- // if (Buff[0]!=PROG_INIT) return 0;
+  if (Buff[1]!=PROG_INIT) return 0;
   ID->blockID = ((unsigned int) Buff[2] << 4) + (Buff[3] >> 4) ;
   ID->modif = Buff[3] & 0x0F;
   ID->softwareModuleNum = Buff[4];  

@@ -15,7 +15,7 @@
 в режиме программирования, в течение этого времени не получает команд от 
 программирующего устройства, то передает управление основной программе*/
 #define PROG_CONDITION_DELAY_IDX 1        
-#define PROG_CONDITION_DELAY_PRESET 10000 
+#define PROG_CONDITION_DELAY_PRESET 1000 
 
 #define ISOTP_TIMEOUT_IDX 2
 #define ISOTP_TIMEOUT_PRESET 2000
@@ -34,6 +34,7 @@
 #define BLOCK_SN_KEY               131
 #define SOFTWARE_MODULE_NUM_KEY    130
 
+
   /*      
     unsigned int  blockID;
     unsigned char modif;
@@ -47,7 +48,7 @@
 #define BOOTLOADER_TYPE      2 // Значение свойства "Тип загрузчика"
 
 #define BOOTLOADER_VERSION_KEY    193 // Ключ свойства "Версия загрузчика"
-#define BOOTLOADER_VERSION   1    // Значение свойства "Версия загрузчика"
+#define BOOTLOADER_VERSION   2    // Значение свойства "Версия загрузчика"
 
 #define BOOTLOADER_FS_ENABLE_KEY  194 // Ключ свойства "Наличие файловой системы"
 #define BOOTLOADER_FS_ENABLE 0    // Значение свойства "Наличие файловой системы"
@@ -58,8 +59,8 @@
 #define BOOTLOADER_OLD_PROTOCOL_VER_KEY  196 // Ключ свойства "Самая старая из поддерживаемых версий протокола обновления ПО"
 #define BOOTLOADER_OLD_PROTOCOL_VER 4    // Значение свойства "Самая старая из поддерживаемых версий протокола обновления ПО"
 
-#define FILETABLE_FLASHADDR 0x1DE00 // Начальный адрес Flash таблицы размещения блоков информации
-#define PARAMLIST_FLASHADDR 0x1DF00 // Начальный адрес Flash словаря параметров
+#define FILETABLE_FLASHADDR 0x1DE00//0xDE00// Начальный адрес Flash таблицы размещения блоков информации
+#define PARAMLIST_FLASHADDR 0x1DF00//0xDF00 // Начальный адрес Flash словаря параметров
 #define EEPROM_SIZE         0x1000
 
 #define MAX_FILE_COUNT   5
