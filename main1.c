@@ -513,6 +513,17 @@ unsigned char flashPageOffset;
 
 void StartProgram()
 {
+  //
+  long value, blockNum;
+
+  int result = ParamDicGetParam(131, &value);
+  if ((result==-1) || (value==0))
+  {
+    blockNum = (unsigned long)(*(unsigned char __flash*)0x10A) + 
+               ((unsigned long)(*(unsigned char __flash*)0x109) << 8);
+    ParamDicSetParam(keyparamTable, &keyCnt, 131, blockNum);
+    ParamDicWriteToFlash(keyparamTable, keyCnt); 
+  }
   // Убираем за собой и запускаем основную программу 
   CANGIE = 0; // Запретить прерывание от CAN
   TIMSK1 = 0; // Запретить прерывание от таймера-счетчика 1
@@ -633,7 +644,13 @@ void ProcessBuffer(unsigned char lastBlock, unsigned char bytesReceived)
                         }
                        
                         if (!lastBlock) progstate = 2;
-                                   else WriteFlashPage((flashStartAddr- flashPageOffset), flashBuff);
+                                   else
+                                   {
+                                      WriteFlashPage((flashStartAddr- flashPageOffset), flashBuff);
+                                      msgBuffOut[0] = PROG_WRITE_ACK;
+                                      msgBuffOut[1] = 0;
+                                      ISOTPSendSingleFrame(msgBuffOut, 2);
+                                   }
                       }
                       else
                       {
@@ -644,7 +661,14 @@ void ProcessBuffer(unsigned char lastBlock, unsigned char bytesReceived)
                           eepromPtr = ( unsigned char __eeprom *)(eepromAddr++);
                           *eepromPtr = msgBuff[i];
                         }
-                        if (!lastBlock) progstate = 3;
+                        if (!lastBlock)
+                            progstate = 3;
+                          else
+                          {
+                            msgBuffOut[0] = PROG_WRITE_ACK;
+                            msgBuffOut[1] = 0;
+                            ISOTPSendSingleFrame(msgBuffOut, 2);
+                          }
                       }
                     }
                     break;
@@ -730,19 +754,19 @@ void ProcessBuffer(unsigned char lastBlock, unsigned char bytesReceived)
                     break;
                 case PROG_SUBMIT:
                     msgBuffOut[0] = PROG_SUBMIT_ACK;
-                    switch (msgBuffOut[1])
+                    switch (msgBuff[1])
                     {
                     case SUBMIT: // Применить изменения
                       {
                         if (FileTableCheckCRC(fileTable, fileCnt, &SysID) == 0)
                         {
-                          msgBuff[1] = SUBMIT_ACK_OK; // CRC совпала
+                          msgBuffOut[1] = SUBMIT_ACK_OK; // CRC совпала
                           ISOTPSendSingleFrame(msgBuffOut, 2);
                           StartProgram(); 
                         }
                         else
                         {
-                          msgBuff[1] = SUBMIT_ACK_FAIL; // что-то пошло не так
+                          msgBuffOut[1] = SUBMIT_ACK_FAIL; // что-то пошло не так
                           ISOTPSendSingleFrame(msgBuffOut, 2);
                           WDTCR |= (1<<WDCE)|(1<<WDE);
                           WDTCR = (1<<WDE)|(1<<WDP2)|(1<<WDP1);	// установить период тайм-аута ~1,0 с
@@ -753,7 +777,7 @@ void ProcessBuffer(unsigned char lastBlock, unsigned char bytesReceived)
                       }
                     case CANCEL: // Отменить изменения
                       {
-                          msgBuff[1] = CANCEL_ACK_FAIL; // Возможность отмены изменений недоступна
+                          msgBuffOut[1] = CANCEL_ACK_FAIL; // Возможность отмены изменений недоступна
                           ISOTPSendSingleFrame(msgBuffOut, 2);
                           break;
                       }
