@@ -48,7 +48,7 @@
 #define BOOTLOADER_TYPE      2 // Значение свойства "Тип загрузчика"
 
 #define BOOTLOADER_VERSION_KEY    193 // Ключ свойства "Версия загрузчика"
-#define BOOTLOADER_VERSION   2    // Значение свойства "Версия загрузчика"
+#define BOOTLOADER_VERSION   3    // Значение свойства "Версия загрузчика"
 
 #define BOOTLOADER_FS_ENABLE_KEY  194 // Ключ свойства "Наличие файловой системы"
 #define BOOTLOADER_FS_ENABLE 0    // Значение свойства "Наличие файловой системы"

@@ -908,12 +908,12 @@ __C_task void main(void)
             if (IDFromCAN.softwareModuleNum == 0) fl = 1;
              else if (IDFromCAN.softwareModuleNum != SysID.softwareModuleNum) continue;
             
+               FIFO_init(&CANMsgBuff);
                if (!fl)        
                {
                 // PORTE = 0x80;
                 __delay_cycles(500000); 
-                times_ms[PROG_CONDITION_DELAY_IDX] = 0;
-                FIFO_init(&CANMsgBuff); 
+                times_ms[PROG_CONDITION_DELAY_IDX] = 0; 
                 int len;
                 msgBuffOut[0] = PROG_STATUS;
                 ParamDicConvertToFUDPBuff (keyparamTable, keyCnt, msgBuffOut, &len); 
